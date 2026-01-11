@@ -15,29 +15,29 @@ public class Main {
             Usage:
                 pftp [COMMAND] [OPTIONS]
             
-                Description:
-                    A simple server/client program for sending an receiving files.
+            Description:
+                A simple server/client program for sending and receiving files.
             
-                Commands:
-                    send    - start the server which listens for incoming requests.
-                    fetch   - fetches the file with the name given in the "-f" option.
-                    list    - displays available files.
+            Commands:
+                send    - start the server which listens for incoming requests.
+                fetch   - fetches the file with the name given in the "-f" option.
+                list    - displays available files.
             
-                Options:
-                    -h, --help
-                        Shows this help message.
+            Options:
+                -h, --help
+                    Shows this help message.
             
-                    -f, --file
-                        Specifies the file to be fetched.
+                -f, --file
+                    Specifies the file to be fetched.
             
-                    -p, --port
-                        Specifies the port on which the server listens / client requests.
+                -p, --port
+                    Specifies the port on which the server listens / client requests.
             
-                    -a, --addr
-                        Specifies the address to which the requests are sent.
+                -a, --addr
+                    Specifies the address to which the requests are sent.
             
-                    -d, --directory
-                        Specifies the working directory of the server.
+                -d, --directory
+                    Specifies the working directory of the server.
             """;
 
     public static void main(String[] args) {

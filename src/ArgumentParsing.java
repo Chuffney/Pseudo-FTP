@@ -5,50 +5,31 @@ public class ArgumentParsing {
     private static Command command = null;
 
     public static void parseArgs(String[] argStr) {
-        Set<Param> remainingParams = new HashSet<>(List.of(Param.values()));
-//        StringTokenizer tokenizer = new StringTokenizer(argStr);
-        Iterator<String> tokenizer = Arrays.stream(argStr).iterator();
+        Iterator<String> iterator = Arrays.stream(argStr).iterator();
 
-        if (!tokenizer.hasNext()) {
+        if (!iterator.hasNext()) {
             return;
         }
 
-        String commandToken = tokenizer.next();
+        String commandToken = iterator.next();
         command = EnumUtil.findEnumValue(Command.values(), c -> c.value.equalsIgnoreCase(commandToken));
 
-        while (tokenizer.hasNext()) {
-            String paramToken = tokenizer.next();
-            Param arg = null;
+        for (Param param : Param.values()) {
+            if (param.defaultValue != null)
+                paramMap.put(param, param.defaultValue);
+        }
+
+        while (iterator.hasNext()) {
+            String paramToken = iterator.next();
+            Param arg;
 
             if (paramToken.startsWith("--") && paramToken.length() > 2) {
                 String tokenBody = paramToken.substring(2);
-
-                for (Param param : Param.values()) {
-                    if (param.longForm.equalsIgnoreCase(tokenBody)) {
-                        if (!remainingParams.contains(param)) {
-                            System.err.println("Duplicated parameter: " + paramToken);
-                            return;
-                        }
-
-                        arg = param;
-                        remainingParams.remove(param);
-                        break;
-                    }
-                }
+                arg = EnumUtil.findEnumValue(Param.values(), p -> p.longForm.equalsIgnoreCase(tokenBody));
             } else if (paramToken.charAt(0) == '-' && paramToken.length() > 1) {
                 String tokenBody = paramToken.substring(1);
+                arg = EnumUtil.findEnumValue(Param.values(), p -> p.shortForm.equalsIgnoreCase(tokenBody));
 
-                for (Param param : Param.values()) {
-                    if (param.shortForm.equalsIgnoreCase(tokenBody)) {
-                        if (!remainingParams.contains(param)) {
-                            System.err.println("Duplicated parameter: " + paramToken);
-                            return;
-                        }
-
-                        arg = param;
-                        remainingParams.remove(param);
-                    }
-                }
             } else {
                 System.err.println("Unexpected argument: " + paramToken);
                 return;
@@ -64,13 +45,8 @@ public class ArgumentParsing {
                 continue;
             }
 
-            String argToken = tokenizer.next();
+            String argToken = iterator.next();
             paramMap.put(arg, argToken);
-
-        }
-        for (Param param : remainingParams) {
-            if (param.defaultValue != null)
-                paramMap.put(param, param.defaultValue);
         }
     }
 
