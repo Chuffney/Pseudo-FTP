@@ -11,11 +11,39 @@ import java.util.stream.Collectors;
 public class Main {
     private static final int MAX_DEPTH = 5;
 
-    private static final File workingDir = new File(".");
+    private static final String HELP_MESSAGE = """
+            Usage:
+                pftp [COMMAND] [OPTIONS]
+            
+                Description:
+                    A simple server/client program for sending an receiving files.
+            
+                Commands:
+                    send    - start the server which listens for incoming requests.
+                    fetch   - fetches the file with the name given in the "-f" option.
+                    list    - displays available files.
+            
+                Options:
+                    -h, --help
+                        Shows this help message.
+            
+                    -f, --file
+                        Specifies the file to be fetched.
+            
+                    -p, --port
+                        Specifies the port on which the server listens / client requests.
+            
+                    -a, --addr
+                        Specifies the address to which the requests are sent.
+            
+                    -d, --directory
+                        Specifies the working directory of the server.
+            """;
 
-    static void main(String[] args) {
+    public static void main(String[] args) {
         if (args.length == 0 || args[0].equalsIgnoreCase("-h") || args[0].equalsIgnoreCase("--help")) {
-            System.out.println("Usage: pftp --send\nor: pftp: --fetch IPaddr fileAddr");
+            System.out.println(HELP_MESSAGE);
+            return;
         }
 
         ArgumentParsing.parseArgs(args);
@@ -28,7 +56,7 @@ public class Main {
 
         try {
             switch (ArgumentParsing.getCommand()) {
-                case Command.FETCH:
+                case FETCH:
                     fetch();
                     break;
                 case SEND:
@@ -46,10 +74,12 @@ public class Main {
     }
 
     private static void send() throws IOException {
+        ServerSocket serverSocket = new ServerSocket(ArgumentParsing.getPort());
         System.out.println("socket opened");
 
+        File workingDir = new File(ArgumentParsing.getParamValue(Param.DIR));
+
         while (true) {
-            ServerSocket serverSocket = new ServerSocket(ArgumentParsing.getPort());
             Socket clientSocket = serverSocket.accept();
 
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -69,7 +99,7 @@ public class Main {
 
                 File file = new File(body);
                 if (!file.exists()) {
-                    out.write(ResponseCode.BAD_REQUEST.code);
+                    out.write(ResponseCode.NOT_FOUND.code);
                 } else if (!file.getCanonicalPath().startsWith(workingDir.getCanonicalPath())) {
                     out.write(ResponseCode.FORBIDDEN.code);
                 } else {
@@ -81,7 +111,6 @@ public class Main {
             }
 
             clientSocket.close();
-            serverSocket.close();
         }
     }
 
@@ -90,7 +119,7 @@ public class Main {
              InputStream in = clientSocket.getInputStream();
              BufferedWriter out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))
         ) {
-            String filePath = ArgumentParsing.paramMap.get(Param.FILE_PATH);
+            String filePath = ArgumentParsing.getParamValue(Param.FILE_PATH);
             out.write(Command.FETCH.code);
             out.write(filePath);
             out.newLine();
@@ -100,7 +129,7 @@ public class Main {
 
             byte code = (byte) in.read();
 
-            if (code == ResponseCode.BAD_REQUEST.code) {
+            if (code == ResponseCode.NOT_FOUND.code) {
                 System.out.println("File not found!");
             } else if (code == ResponseCode.FORBIDDEN.code) {
                 System.out.println("Access denied!");
@@ -133,9 +162,7 @@ public class Main {
 
         StringBuilder prefix = new StringBuilder();
         if (level >= 1) {
-            for (int i = 1; i < level; i++) {
-                prefix.append("│  ");
-            }
+            prefix.append("│  ".repeat(level - 1));
             prefix.append("├─ ");
         }
 
@@ -157,7 +184,7 @@ public class Main {
     }
 
     private static Socket openSocket() throws IOException {
-        InetAddress host = InetAddress.getByName(ArgumentParsing.paramMap.get(Param.IP_ADDR));
+        InetAddress host = InetAddress.getByName(ArgumentParsing.getParamValue(Param.IP_ADDR));
         return new Socket(host, ArgumentParsing.getPort());
     }
 

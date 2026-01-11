@@ -1,7 +1,7 @@
 import java.util.*;
 
 public class ArgumentParsing {
-    public static final Map<Param, String> paramMap = new HashMap<>();
+    private static final Map<Param, String> paramMap = new HashMap<>();
     private static Command command = null;
 
     public static void parseArgs(String[] argStr) {
@@ -80,5 +80,9 @@ public class ArgumentParsing {
 
     public static Command getCommand() {
         return command;
+    }
+
+    public static String getParamValue(Param param) {
+        return paramMap.get(param);
     }
 }

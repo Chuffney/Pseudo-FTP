@@ -1,6 +1,6 @@
 public enum ResponseCode {
     OK(0),
-    BAD_REQUEST(1),
+    NOT_FOUND(1),
     FORBIDDEN(2);
 
     final byte code;

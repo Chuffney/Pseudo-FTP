@@ -1,7 +1,8 @@
 public enum Param {
     FILE_PATH("f", "filepath", null, false),
     PORT("p", "port", "3000", false),
-    IP_ADDR("a", "addr", null, false);
+    IP_ADDR("a", "addr", null, false),
+    DIR("d", "directory", ".", false);
 
     final String shortForm;
     final String longForm;
