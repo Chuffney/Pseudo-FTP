@@ -88,23 +88,23 @@ public class Main {
 
             String request = in.readLine();
             char operation = request.charAt(0);
-            String body = request.substring(1);
+            String reqBody = request.substring(1);
 
             if (Command.LIST.code == operation) {
                 StringBuilder sb = new StringBuilder();
                 String fileTree = getFileTree(workingDir, 0, sb);
                 out.write(fileTree.getBytes());
             } else if (Command.FETCH.code == operation) {
-                System.out.println("file requested: " + body);
+                System.out.println("file requested: " + reqBody);
 
-                File file = new File(body);
+                File file = new File(workingDir, reqBody);
                 if (!file.exists()) {
                     out.write(ResponseCode.NOT_FOUND.code);
                 } else if (!file.getCanonicalPath().startsWith(workingDir.getCanonicalPath())) {
                     out.write(ResponseCode.FORBIDDEN.code);
                 } else {
                     out.write(ResponseCode.OK.code);
-                    FileInputStream fis = new FileInputStream(body);
+                    FileInputStream fis = new FileInputStream(file);
                     fis.transferTo(out);
                     fis.close();
                 }
