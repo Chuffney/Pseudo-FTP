@@ -2,11 +2,19 @@ import java.util.*;
 
 public class ArgumentParsing {
     public static final Map<Param, String> paramMap = new HashMap<>();
+    private static Command command = null;
 
     public static void parseArgs(String[] argStr) {
         Set<Param> remainingParams = new HashSet<>(List.of(Param.values()));
 //        StringTokenizer tokenizer = new StringTokenizer(argStr);
         Iterator<String> tokenizer = Arrays.stream(argStr).iterator();
+
+        if (!tokenizer.hasNext()) {
+            return;
+        }
+
+        String commandToken = tokenizer.next();
+        command = EnumUtil.findEnumValue(Command.values(), c -> c.value.equalsIgnoreCase(commandToken));
 
         while (tokenizer.hasNext()) {
             String paramToken = tokenizer.next();
@@ -64,5 +72,13 @@ public class ArgumentParsing {
             if (param.defaultValue != null)
                 paramMap.put(param, param.defaultValue);
         }
+    }
+
+    public static int getPort() {
+        return Integer.parseInt(paramMap.get(Param.PORT));
+    }
+
+    public static Command getCommand() {
+        return command;
     }
 }
