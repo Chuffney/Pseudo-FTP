@@ -75,12 +75,14 @@ public class Main {
 
     private static void send() throws IOException {
         ServerSocket serverSocket = new ServerSocket(ArgumentParsing.getPort());
-        System.out.println("socket opened");
+        System.out.println("awaiting requests");
 
         File workingDir = new File(ArgumentParsing.getParamValue(Param.DIR));
 
         while (true) {
             Socket clientSocket = serverSocket.accept();
+            InetAddress clientAddress = clientSocket.getInetAddress();
+            System.out.print(clientAddress.getHostAddress() + ' ');
 
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             OutputStream out = clientSocket.getOutputStream();
@@ -91,11 +93,12 @@ public class Main {
             String reqBody = request.substring(1);
 
             if (Command.LIST.code == operation) {
+                System.out.println("LIST");
                 StringBuilder sb = new StringBuilder();
                 String fileTree = getFileTree(workingDir, 0, sb);
                 out.write(fileTree.getBytes());
             } else if (Command.FETCH.code == operation) {
-                System.out.println("file requested: " + reqBody);
+                System.out.println("FETCH: " + reqBody);
 
                 File file = new File(workingDir, reqBody);
                 if (!file.exists()) {
@@ -108,6 +111,9 @@ public class Main {
                     fis.transferTo(out);
                     fis.close();
                 }
+            } else {
+                System.out.println("UNKNOWN: " + operation);
+                out.write(ResponseCode.BAD_REQUEST.code);
             }
 
             clientSocket.close();
@@ -135,7 +141,7 @@ public class Main {
                 System.out.println("Access denied!");
             } else if (code == ResponseCode.OK.code) {
                 String fileName = new File(filePath).getName();
-                System.out.println("Transfering file to " + fileName);
+                System.out.println("Transferring file to " + fileName);
                 FileOutputStream fos = new FileOutputStream(fileName);
                 in.transferTo(fos);
                 fos.close();
