@@ -1,3 +1,11 @@
+package pftp.service;
+
+import pftp.ArgumentParsing;
+import pftp.model.Command;
+import pftp.model.Param;
+import pftp.model.ResponseCode;
+import pftp.util.StringUtil;
+
 import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -9,11 +17,17 @@ public class FetchService {
     private static final int STEP_SIZE = 50;
 
     public static void fetch() throws IOException {
+        String filePath = ArgumentParsing.getParamValue(Param.FILE_PATH);
+
+        if (StringUtil.isEmpty(filePath)) {
+            System.err.println("Enter the name of the file to fetch (fetch -f [FILE NAME]).");
+            return;
+        }
+
         try (Socket clientSocket = ConnectionService.openSocket();
              InputStream in = clientSocket.getInputStream();
              BufferedWriter out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))
         ) {
-            String filePath = ArgumentParsing.getParamValue(Param.FILE_PATH);
             out.write(Command.FETCH.code);
             out.write(filePath);
             out.newLine();

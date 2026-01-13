@@ -1,10 +1,12 @@
+package pftp.model;
+
 public enum Command {
     SEND("send", 's'),
     FETCH("fetch", 'f'),
     LIST("list", 'l');
 
-    final String value;
-    final char code;
+    public final String value;
+    public final char code;
 
     Command(String value, char code) {
         this.value = value;
