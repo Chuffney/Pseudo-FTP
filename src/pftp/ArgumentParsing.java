@@ -1,18 +1,30 @@
-import java.util.*;
+package pftp;
+
+import pftp.model.Command;
+import pftp.model.Param;
+import pftp.util.StringUtil;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ArgumentParsing {
     private static final Map<Param, String> paramMap = new HashMap<>();
     private static Command command = null;
 
-    public static void parseArgs(String[] argStr) {
+    public static boolean parseArgs(String[] argStr) {
         Iterator<String> iterator = Arrays.stream(argStr).iterator();
-
-        if (!iterator.hasNext()) {
-            return;
-        }
 
         String commandToken = iterator.next();
         command = Command.getByValue(commandToken);
+
+        if (command == null) {
+            String availableCommands = Arrays.stream(Command.values()).map(c -> c.value).collect(Collectors.joining(", "));
+            System.err.println("Available commands: " + availableCommands);
+            return false;
+        }
 
         for (Param param : Param.values()) {
             if (param.defaultValue != null)
@@ -31,12 +43,12 @@ public class ArgumentParsing {
                 arg = Param.getByShortForm(tokenBody);
             } else {
                 System.err.println("Unexpected argument: " + paramToken);
-                return;
+                return false;
             }
 
             if (arg == null) {
                 System.err.println("Unknown parameter: " + paramToken);
-                return;
+                return false;
             }
 
             if (arg.isFlag) {
@@ -44,13 +56,19 @@ public class ArgumentParsing {
                 continue;
             }
 
+            if (!iterator.hasNext()) {
+                System.out.println("No value provided for parameter " + paramToken);
+                return false;
+            }
             String argToken = iterator.next();
+
+            if (arg.isNumber && !StringUtil.isNumber(argToken)) {
+                System.err.println("The value of the " + paramToken + " parameter must be numeric.");
+                return false;
+            }
             paramMap.put(arg, argToken);
         }
-    }
-
-    public static int getPort() {
-        return Integer.parseInt(paramMap.get(Param.PORT));
+        return true;
     }
 
     public static Command getCommand() {
@@ -59,5 +77,12 @@ public class ArgumentParsing {
 
     public static String getParamValue(Param param) {
         return paramMap.get(param);
+    }
+
+    public static int getParamIntValue(Param param) {
+        if (!param.isNumber)
+            throw new IllegalArgumentException("Parameter " + param + " is not a number!");
+
+        return Integer.parseInt(paramMap.get(param));
     }
 }
