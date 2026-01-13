@@ -12,7 +12,7 @@ public class ArgumentParsing {
         }
 
         String commandToken = iterator.next();
-        command = EnumUtil.findEnumValue(Command.values(), c -> c.value.equalsIgnoreCase(commandToken));
+        command = Command.getByValue(commandToken);
 
         for (Param param : Param.values()) {
             if (param.defaultValue != null)
@@ -25,11 +25,10 @@ public class ArgumentParsing {
 
             if (paramToken.startsWith("--") && paramToken.length() > 2) {
                 String tokenBody = paramToken.substring(2);
-                arg = EnumUtil.findEnumValue(Param.values(), p -> p.longForm.equalsIgnoreCase(tokenBody));
+                arg = Param.getByLongForm(tokenBody);
             } else if (paramToken.charAt(0) == '-' && paramToken.length() > 1) {
                 String tokenBody = paramToken.substring(1);
-                arg = EnumUtil.findEnumValue(Param.values(), p -> p.shortForm.equalsIgnoreCase(tokenBody));
-
+                arg = Param.getByShortForm(tokenBody);
             } else {
                 System.err.println("Unexpected argument: " + paramToken);
                 return;

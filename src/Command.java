@@ -10,4 +10,12 @@ public enum Command {
         this.value = value;
         this.code = code;
     }
+
+    public static Command getByValue(String value) {
+        for (Command command : values()) {
+            if (command.value.equalsIgnoreCase(value))
+                return command;
+        }
+        return null;
+    }
 }

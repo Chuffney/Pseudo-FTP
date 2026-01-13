@@ -3,6 +3,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -57,7 +59,7 @@ public class Main {
         try {
             switch (ArgumentParsing.getCommand()) {
                 case FETCH:
-                    fetch();
+                    FetchService.fetch();
                     break;
                 case SEND:
                     send();
@@ -107,6 +109,7 @@ public class Main {
                     out.write(ResponseCode.FORBIDDEN.code);
                 } else {
                     out.write(ResponseCode.OK.code);
+                    out.write(longToBytes(file.length()));
                     FileInputStream fis = new FileInputStream(file);
                     fis.transferTo(out);
                     fis.close();
@@ -115,42 +118,12 @@ public class Main {
                 System.out.println("UNKNOWN: " + operation);
                 out.write(ResponseCode.BAD_REQUEST.code);
             }
-
             clientSocket.close();
         }
     }
 
-    private static void fetch() throws IOException {
-        try (Socket clientSocket = openSocket();
-             InputStream in = clientSocket.getInputStream();
-             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))
-        ) {
-            String filePath = ArgumentParsing.getParamValue(Param.FILE_PATH);
-            out.write(Command.FETCH.code);
-            out.write(filePath);
-            out.newLine();
-            out.flush();
-
-            System.out.println("sent request");
-
-            byte code = (byte) in.read();
-
-            if (code == ResponseCode.NOT_FOUND.code) {
-                System.out.println("File not found!");
-            } else if (code == ResponseCode.FORBIDDEN.code) {
-                System.out.println("Access denied!");
-            } else if (code == ResponseCode.OK.code) {
-                String fileName = new File(filePath).getName();
-                System.out.println("Transferring file to " + fileName);
-                FileOutputStream fos = new FileOutputStream(fileName);
-                in.transferTo(fos);
-                fos.close();
-            }
-        }
-    }
-
     private static void list() throws IOException {
-        try (Socket clientSocket = openSocket();
+        try (Socket clientSocket = ConnectionService.openSocket();
              InputStream in = clientSocket.getInputStream();
              BufferedWriter out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))
         ) {
@@ -189,9 +162,11 @@ public class Main {
         return sb.toString();
     }
 
-    private static Socket openSocket() throws IOException {
-        InetAddress host = InetAddress.getByName(ArgumentParsing.getParamValue(Param.IP_ADDR));
-        return new Socket(host, ArgumentParsing.getPort());
+    public static byte[] longToBytes(long l) {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putLong(l);
+        return buffer.array();
     }
 
     public static void terminateEarly() {
