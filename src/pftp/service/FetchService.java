@@ -1,4 +1,12 @@
+package pftp.service;
+
+import pftp.ArgumentParsing;
+import pftp.model.Command;
+import pftp.model.Param;
+import pftp.model.ResponseCode;
+
 import java.io.*;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -45,6 +53,8 @@ public class FetchService {
 
                 fos.close();
             }
+        } catch (ConnectException e) {
+            System.out.println(e.getMessage());
         }
     }
 
