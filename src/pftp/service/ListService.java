@@ -3,6 +3,7 @@ package pftp.service;
 import pftp.ArgumentParsing;
 import pftp.model.Command;
 import pftp.model.Param;
+import pftp.model.ResponseCode;
 
 import java.io.*;
 import java.net.ConnectException;
@@ -17,10 +18,18 @@ public class ListService {
              InputStream in = clientSocket.getInputStream();
              BufferedWriter out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))
         ) {
+            String targetDir = ArgumentParsing.getParamValue(Param.DIR);
+
             out.write(Command.LIST.code);
-            out.write(ArgumentParsing.getParamValue(Param.DIR));
+            out.write(targetDir);
             out.newLine();
             out.flush();
+
+            int responseCode = (byte) in.read();
+            if (ResponseCode.NOT_FOUND.code == responseCode) {
+                System.out.println("Directory \"" + targetDir + "\" not found.");
+                return;
+            }
 
             byte[] bytes = in.readAllBytes();
             System.out.println(new String(bytes, StandardCharsets.UTF_8));
