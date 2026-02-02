@@ -9,6 +9,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -67,11 +68,13 @@ public class SendService {
                     continue;
                 }
 
-                out.write(ResponseCode.OK.code);
-                out.write(longToBytes(file.length()));
-                FileInputStream fis = new FileInputStream(file);
-                fis.transferTo(out);
-                fis.close();
+                try (InputStream fis = new FileInputStream(file)) {
+                    out.write(ResponseCode.OK.code);
+                    out.write(longToBytes(file.length()));
+                    fis.transferTo(out);
+                } catch (SocketException ignored) {
+                    System.out.println("client disconnected prematurely");
+                }
             } else {
                 System.out.println("UNKNOWN: " + operation);
                 out.write(ResponseCode.BAD_REQUEST.code);

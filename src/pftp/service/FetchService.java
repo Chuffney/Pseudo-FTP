@@ -49,7 +49,9 @@ public class FetchService {
                 long time = System.currentTimeMillis() - fetchStart;
                 System.out.println("time: " + (float)time/1000f + " s");
                 System.out.println("size: " + fileSize/1000 + " kB");
-                System.out.println("speed: " + (fileSize / time) + " kB / s");
+                if (fileSize > 0 && time > 0) {
+                    System.out.println("speed: " + (fileSize / time) + " kB / s");
+                }
 
                 fos.close();
             }
