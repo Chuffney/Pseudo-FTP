@@ -10,6 +10,7 @@ import java.net.ConnectException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 public class FetchService {
@@ -33,27 +34,24 @@ public class FetchService {
 
             if (code == ResponseCode.NOT_FOUND.code) {
                 System.out.println("File not found!");
-            } else if (code == ResponseCode.FORBIDDEN.code) {
-                System.out.println("Access denied!");
             } else if (code == ResponseCode.OK.code) {
                 byte[] byteArray = in.readNBytes(Long.BYTES);
                 long fileSize = bytesToLong(byteArray);
 
                 long fetchStart = System.currentTimeMillis();
 
-                File file = new File(new File(filePath).getName());
+                File file = Paths.get(filePath).getFileName().toFile();
                 System.out.println("Transferring file to " + file.getName());
-                FileOutputStream fos = new FileOutputStream(file);
-                transfer(in, fos, fileSize);
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    transfer(in, fos, fileSize);
 
-                long time = System.currentTimeMillis() - fetchStart;
-                System.out.println("time: " + (float)time/1000f + " s");
-                System.out.println("size: " + fileSize/1000 + " kB");
-                if (fileSize > 0 && time > 0) {
-                    System.out.println("speed: " + (fileSize / time) + " kB / s");
+                    long time = System.currentTimeMillis() - fetchStart;
+                    System.out.println("time: " + (float) time / 1000f + " s");
+                    System.out.println("size: " + fileSize / 1000 + " kB");
+                    if (fileSize > 0 && time > 0) {
+                        System.out.println("speed: " + (fileSize / time) + " kB / s");
+                    }
                 }
-
-                fos.close();
             }
         } catch (ConnectException e) {
             System.out.println(e.getMessage());
