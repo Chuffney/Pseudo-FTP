@@ -9,6 +9,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -27,56 +28,55 @@ public class SendService {
         File workingDir = new File(ArgumentParsing.getParamValue(Param.DIR));
 
         while (true) {
-            Socket clientSocket = serverSocket.accept();
-            InetAddress clientAddress = clientSocket.getInetAddress();
-            System.out.print(clientAddress.getHostAddress() + ' ');
+            try (Socket clientSocket = serverSocket.accept()) {
+                InetAddress clientAddress = clientSocket.getInetAddress();
+                System.out.print(clientAddress.getHostAddress() + ' ');
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            OutputStream out = clientSocket.getOutputStream();
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                OutputStream out = clientSocket.getOutputStream();
 
 
-            String request = in.readLine();
-            char operation = request.charAt(0);
-            String reqBody = request.substring(1);
-            File file = new File(workingDir, reqBody);
+                String request = in.readLine();
+                char operation = request.charAt(0);
+                String reqBody = request.substring(1);
+                File file = new File(workingDir, reqBody);
 
-            if (!file.exists()) {
-                out.write(ResponseCode.NOT_FOUND.code);
-                continue;
-            } else if (!file.getCanonicalPath().startsWith(workingDir.getCanonicalPath())) {
-                out.write(ResponseCode.FORBIDDEN.code);
-                continue;
-            }
-
-            if (Command.LIST.code == operation) {
-                System.out.println("LIST: " + reqBody);
-
-                if (!file.isDirectory()) {
+                if (!file.exists()) {
                     out.write(ResponseCode.NOT_FOUND.code);
                     continue;
                 }
 
-                String fileList = ListService.listFiles(reqBody, file);
-                out.write(ResponseCode.OK.code);
-                out.write(fileList.getBytes());
-            } else if (Command.FETCH.code == operation) {
-                System.out.println("FETCH: " + reqBody);
+                if (Command.LIST.code == operation) {
+                    System.out.println("LIST: " + reqBody);
 
-                if (file.isDirectory()) {
-                    out.write(ResponseCode.NOT_FOUND.code);
-                    continue;
+                    if (!file.isDirectory()) {
+                        out.write(ResponseCode.NOT_FOUND.code);
+                        continue;
+                    }
+
+                    String fileList = ListService.listFiles(reqBody, file);
+                    out.write(ResponseCode.OK.code);
+                    out.write(fileList.getBytes());
+                } else if (Command.FETCH.code == operation) {
+                    System.out.println("FETCH: " + reqBody);
+
+                    if (file.isDirectory()) {
+                        out.write(ResponseCode.NOT_FOUND.code);
+                        continue;
+                    }
+
+                    try (InputStream fis = new FileInputStream(file)) {
+                        out.write(ResponseCode.OK.code);
+                        out.write(longToBytes(file.length()));
+                        fis.transferTo(out);
+                    } catch (SocketException ignored) {
+                        System.out.println("client disconnected prematurely");
+                    }
+                } else {
+                    System.out.println("UNKNOWN: " + operation);
+                    out.write(ResponseCode.BAD_REQUEST.code);
                 }
-
-                out.write(ResponseCode.OK.code);
-                out.write(longToBytes(file.length()));
-                FileInputStream fis = new FileInputStream(file);
-                fis.transferTo(out);
-                fis.close();
-            } else {
-                System.out.println("UNKNOWN: " + operation);
-                out.write(ResponseCode.BAD_REQUEST.code);
             }
-            clientSocket.close();
         }
     }
 

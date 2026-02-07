@@ -70,8 +70,4 @@ public class Main {
             e.printStackTrace();
         }
     }
-
-    public static void terminateEarly() {
-        System.exit(-1);
-    }
 }
