@@ -1,5 +1,6 @@
 .idea/
 /out/
+META-INF/
 
 *.class
 *.war
