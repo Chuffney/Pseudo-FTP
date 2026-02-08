@@ -11,11 +11,10 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
-import java.util.Objects;
 
 public class FetchService {
     private static final int DEFAULT_BUFFER_SIZE = 8192;
-    private static final int STEP_SIZE = 50;
+    private static final int STEP_COUNT = 50;
 
     public static void fetch() throws IOException {
         try (Socket clientSocket = ConnectionService.openSocket();
@@ -67,25 +66,28 @@ public class FetchService {
     }
 
     public static void transfer(InputStream in, OutputStream out, long size) throws IOException {
-        Objects.requireNonNull(out, "out");
-        long step = size/STEP_SIZE;
+        long stepSize = size / STEP_COUNT;
         long transferred = 0;
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-
-        if (step > 0) {
-            System.out.print("_".repeat(STEP_SIZE));
-            System.out.println();
-        }
 
         int read;
         while ((read = in.read(buffer, 0, DEFAULT_BUFFER_SIZE)) >= 0) {
             out.write(buffer, 0, read);
-            transferred += read;
-            if (step > 0 && transferred > step) {
-                System.out.print('+');
-                transferred %= step;
+
+            if (stepSize > 0) {
+                transferred += read;
+                printProgressBar(transferred, stepSize);
             }
         }
         System.out.println();
+    }
+
+    private static void printProgressBar(long transferred, long stepSize) {
+        int steps = (int) (transferred / stepSize);
+        System.out.print('|');
+        System.out.print("=".repeat(steps));
+        System.out.print(" ".repeat(STEP_COUNT - steps));
+        System.out.print('|');
+        System.out.print('\r');
     }
 }
