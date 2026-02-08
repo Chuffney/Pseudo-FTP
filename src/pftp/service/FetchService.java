@@ -11,7 +11,6 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
-import java.util.Objects;
 
 public class FetchService {
     private static final int DEFAULT_BUFFER_SIZE = 8192;
@@ -67,7 +66,6 @@ public class FetchService {
     }
 
     public static void transfer(InputStream in, OutputStream out, long size) throws IOException {
-        Objects.requireNonNull(out, "out");
         long stepSize = size / STEP_COUNT;
         long transferred = 0;
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
