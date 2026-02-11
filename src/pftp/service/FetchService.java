@@ -70,24 +70,22 @@ public class FetchService {
         long transferred = 0;
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
 
+        initProgressBar();
         int read;
         while ((read = in.read(buffer, 0, DEFAULT_BUFFER_SIZE)) >= 0) {
             out.write(buffer, 0, read);
+            transferred += read;
 
-            if (stepSize > 0) {
-                transferred += read;
-                printProgressBar(transferred, stepSize);
+            if (transferred >= stepSize && stepSize > 0) {
+                System.out.print("=".repeat((int) (transferred / stepSize)));
+                transferred %= stepSize;
             }
         }
-        System.out.println();
+        System.out.println('|');
     }
 
-    private static void printProgressBar(long transferred, long stepSize) {
-        int steps = (int) (transferred / stepSize);
-        System.out.print('|');
-        System.out.print("=".repeat(steps));
-        System.out.print(" ".repeat(STEP_COUNT - steps));
-        System.out.print('|');
-        System.out.print('\r');
+    private static void initProgressBar() {
+        System.out.print(" ".repeat(STEP_COUNT + 1)); // +1 is there to compensate for the leading '|'
+        System.out.print("|\r|");
     }
 }
